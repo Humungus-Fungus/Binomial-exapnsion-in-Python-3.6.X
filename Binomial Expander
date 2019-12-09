@@ -1,0 +1,108 @@
+import re
+def pascal_triangle(n_row):
+	result = []
+	for _ in range(n_row):
+		row = [1]
+		if result:
+			last_row = result[-1]
+
+			row.extend([sum(pair) for pair in zip(last_row, last_row[1:])])
+
+			row.append(1)
+		result.append(row)
+	return result
+
+def expand(expr):
+	binomial_expression = re.compile(r'^\((-?)(\d*)([a-z])(\+|\-)(\d+)\)\^(\d+)$')
+	match = re.search(binomial_expression, expr)
+	sign_of_coeff = match.group(1)
+	try:
+		coeff_to_x = int(match.group(2))
+	except AttributeError:
+		coeff_to_x = 1
+	except ValueError:
+		coeff_to_x = 1
+
+	if sign_of_coeff == '-':
+		coeff_to_x = int(coeff_to_x) * -1
+	x = match.group(3)
+	sign = match.group(4)
+	addition = int(match.group(5))
+	power = int(match.group(6))
+	if power == 0:
+		return '1'
+	orig_power = power
+	output = []
+
+	if sign == '-':
+		addition = addition * -1
+		sign = ''
+
+	if coeff_to_x == None:
+		coeff_to_x = 1
+
+	# Commented out line dictates the original coefficient of x and what to do with it.
+	coeffs = []
+	
+	for i in range(power+1):
+		term = '{}^{}'.format(x, power)
+		if term == x+'^0':
+			term = '1'
+		coeff_of_term = str(coeff_to_x ** power)
+		coeffs.append(coeff_of_term)
+		output.append(term) 
+		power -= 1
+	
+	# Finding coefficient for the b part of (ax+b)^n
+	coeffs_of_addition = []
+
+	power = 0
+
+	for _ in range(orig_power+1):
+		coeff_addition = addition ** power
+		coeffs_of_addition.append(coeff_addition)
+		power += 1
+
+	tri_row = pascal_triangle(orig_power+1)[-1]
+
+	# Using Pascal's Triangle to find coefficients (i in this case is a number from pascal's triangle, and j being the original x term)
+	for i, j in zip(tri_row, output):
+		n = output.index(j)
+		
+		# Here, i has to be multiplied by the corresponding item in coeffs
+		real_i = int(i) * int(coeffs[n]) * int(coeffs_of_addition[n])		
+		
+		print('fresh after creation, real_i: ', real_i)
+
+		if output[n] == '1':
+			output[n] = int(real_i)
+			if output[n] > 0:
+				output[n] = str('+' + str(output[n]))
+			else:
+				output[n] = str(real_i)
+			output[n] = str(output[n])
+			continue
+		
+		if int(real_i) > 0:
+			real_i = '+' + str(real_i)
+		
+		print(real_i)
+
+		if real_i == 1 or real_i == '+1':
+			pass # No need to add coefficient of 1
+		elif real_i == '-1' or real_i == -1:
+			output[n] = '-' + output[n]
+		else:
+			print('real_i, right before being used: ', str(real_i))
+			output[n] = str(real_i) + output[n]			
+
+	output = ''.join(output)
+	output = output.replace('^1', '')
+	output = output.replace('--', '?')
+	output = output.replace('?', '-')
+	output = [i for i in output]
+	if output[0] == '+':
+		del output[0]
+	output = ''.join(output)
+
+	return output
